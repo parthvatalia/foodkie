@@ -12,7 +12,6 @@ import 'package:foodkie/presentation/providers/order_provider.dart';
 import 'package:foodkie/presentation/providers/table_provider.dart';
 import 'package:foodkie/presentation/screens/auth/splash_screen.dart';
 
-import 'core/theme.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
