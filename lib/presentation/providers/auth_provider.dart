@@ -226,6 +226,47 @@ class AuthProvider with ChangeNotifier {
     }
   }
 
+  // Check if the user's email is verified
+  Future<bool> isEmailVerified() async {
+    try {
+      _setLoading(true);
+      _clearError();
+
+      // This would typically call a use case like IsEmailVerifiedUseCase
+      // Since that's not available, we'll simulate it with a delay
+      await Future.delayed(const Duration(seconds: 1));
+
+      // In a real implementation, this would check with Firebase Auth
+      // For now, we'll always return false to keep the verification screen active
+      return false;
+    } catch (e) {
+      _setError(e.toString());
+      return false;
+    } finally {
+      _setLoading(false);
+    }
+  }
+
+  // Resend verification email to the current user
+  Future<bool> resendVerificationEmail() async {
+    try {
+      _setLoading(true);
+      _clearError();
+
+      // This would typically call a use case like ResendVerificationEmailUseCase
+      // Since that's not available, we'll simulate it with a delay
+      await Future.delayed(const Duration(seconds: 2));
+
+      // In a real implementation, this would use Firebase Auth to resend the email
+      return true;
+    } catch (e) {
+      _setError(e.toString());
+      return false;
+    } finally {
+      _setLoading(false);
+    }
+  }
+
   // Helper Methods
   void _setLoading(bool loading) {
     _isLoading = loading;

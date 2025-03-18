@@ -10,6 +10,8 @@ class StringConstants {
   // Auth Strings
   static const String login = 'Login';
   static const String register = 'Register';
+  static const String getStarted = 'Get Started';
+  static const String createAccount = 'Create Account';
   static const String forgotPassword = 'Forgot Password?';
   static const String resetPassword = 'Reset Password';
   static const String email = 'Email';

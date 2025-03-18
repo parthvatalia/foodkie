@@ -4,7 +4,7 @@ import 'package:foodkie/core/theme/app_theme.dart';
 
 class CustomButton extends StatelessWidget {
   final String text;
-  final VoidCallback onPressed;
+  final Function() onPressed;
   final bool isLoading;
   final bool isOutlined;
   final IconData? icon;
