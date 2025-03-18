@@ -62,6 +62,7 @@ class StringConstants {
   static const String sort = 'Sort';
   static const String clear = 'Clear';
   static const String reset = 'Reset';
+  static const String skip = 'Skip';
 
   // Manager Dashboard
   static const String dashboard = 'Dashboard';

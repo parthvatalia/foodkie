@@ -8,9 +8,8 @@ import 'package:foodkie/domain/repositories/auth_repository.dart';
 
 class AuthRepositoryImpl implements AuthRepository {
   final AuthRemoteSource _remoteSource;
-  final LocalStorage _localStorage;
 
-  AuthRepositoryImpl(this._remoteSource, this._localStorage);
+  AuthRepositoryImpl(this._remoteSource);
 
   @override
   Future<UserModel> loginUser({
@@ -26,8 +25,8 @@ class AuthRepositoryImpl implements AuthRepository {
 
       // Save user data to local storage if remember me is checked
       if (rememberMe) {
-        await _localStorage.saveUser(user);
-        await _localStorage.saveRememberMe(true);
+        await LocalStorage.saveUser(user);
+        await LocalStorage.saveRememberMe(true);
       }
 
       return user;
@@ -63,7 +62,7 @@ class AuthRepositoryImpl implements AuthRepository {
   Future<void> logoutUser() async {
     try {
       await _remoteSource.logoutUser();
-      await _localStorage.clearUserData();
+      await LocalStorage.clearUserData();
     } catch (e) {
       throw e.toString();
     }
@@ -85,7 +84,7 @@ class AuthRepositoryImpl implements AuthRepository {
       final authUser = _remoteSource.getCurrentUser();
       if (authUser == null) {
         // Try to get user from local storage
-        final localUser = _localStorage.getUser();
+        final localUser = LocalStorage.getUser();
         return localUser;
       }
 
@@ -100,7 +99,7 @@ class AuthRepositoryImpl implements AuthRepository {
   @override
   bool isAuthenticated() {
     try {
-      return _remoteSource.isAuthenticated() || _localStorage.getUser() != null;
+      return _remoteSource.isAuthenticated() || LocalStorage.getUser() != null;
     } catch (e) {
       return false;
     }
@@ -122,9 +121,9 @@ class AuthRepositoryImpl implements AuthRepository {
       );
 
       // Update user in local storage if exists
-      final localUser = _localStorage.getUser();
+      final localUser = LocalStorage.getUser();
       if (localUser != null && localUser.id == userId) {
-        await _localStorage.saveUser(updatedUser);
+        await LocalStorage.saveUser(updatedUser);
       }
 
       return updatedUser;
