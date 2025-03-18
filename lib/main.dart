@@ -12,11 +12,14 @@ import 'package:foodkie/presentation/providers/order_provider.dart';
 import 'package:foodkie/presentation/providers/table_provider.dart';
 import 'package:foodkie/presentation/screens/auth/splash_screen.dart';
 
+import 'data/datasources/remote/auth_remote_source.dart';
+import 'data/repositories/auth_repository_impl.dart';
+import 'domain/usecases/auth/register_usecase.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(
-  //  options: DefaultFirebaseOptions.currentPlatform,
+    //  options: DefaultFirebaseOptions.currentPlatform,
   );
 
   // Set preferred orientations
@@ -24,18 +27,23 @@ void main() async {
     DeviceOrientation.portraitUp,
     DeviceOrientation.portraitDown,
   ]);
-
-  runApp(const MyApp());
+  final authRemoteSource = AuthRemoteSource();
+  final authRepository = AuthRepositoryImpl(authRemoteSource);
+  final registerUseCase = RegisterUseCase(authRepository);
+  runApp( MyApp(registerUseCase: registerUseCase));
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({Key? key}) : super(key: key);
+  final RegisterUseCase registerUseCase;
+  const MyApp( {Key? key, required this.registerUseCase}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
-        ChangeNotifierProvider(create: (_) => AuthProvider()),
+        ChangeNotifierProvider(
+          create: (_) => AuthProvider(registerUseCase: registerUseCase),
+        ),
         ChangeNotifierProvider(create: (_) => CategoryProvider()),
         ChangeNotifierProvider(create: (_) => FoodItemProvider()),
         ChangeNotifierProvider(create: (_) => OrderProvider()),
