@@ -143,6 +143,8 @@ class CustomDrawer extends StatelessWidget {
   }
 
   Widget _buildLogoutButton(BuildContext context) {
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+
     return ListTile(
       leading: const Icon(
         Icons.logout,
@@ -173,7 +175,7 @@ class CustomDrawer extends StatelessWidget {
           ),
           onConfirm: () {
             // Logout user
-            context.read<AuthProvider>().logout();
+            authProvider.logout();
           },
         );
       },

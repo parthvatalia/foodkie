@@ -1,4 +1,4 @@
-// core/constants/route_constants.dart
+// lib/core/constants/route_constants.dart
 
 class RouteConstants {
   // Auth Routes

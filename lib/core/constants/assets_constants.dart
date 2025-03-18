@@ -7,7 +7,7 @@ class AssetsConstants {
   static const String _animationBasePath = 'assets/animations';
 
   // Logo Images
-  static const String logoFullPath = '$_imgBasePath/logo_full.png';
+  static const String logoFullPath = '$_imgBasePath/logo_text.png';
   static const String logoIconPath = '$_imgBasePath/logo_icon.png';
   static const String logoTextPath = '$_imgBasePath/logo_text.png';
 
