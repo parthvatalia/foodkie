@@ -104,6 +104,21 @@ class FoodItemProvider with ChangeNotifier {
     }
   }
 
+  Future<List<FoodItem>> getAllFoodItemsFuture() async {
+    try {
+      _setStatus(FoodItemStatus.loading);
+
+      final foodItems = await getFoodsUseCase?.executeFuture() ?? [];
+
+      _foodItems = foodItems;
+      _setStatus(FoodItemStatus.loaded);
+      return foodItems;
+    } catch (e) {
+      _setError(e.toString());
+      return [];
+    }
+  }
+
   // Load food items by category
   Future<void> loadFoodItemsByCategory(String categoryId) async {
     try {
@@ -243,26 +258,29 @@ class FoodItemProvider with ChangeNotifier {
   }
 
   // Search food items
-  Future<void> searchFoodItems(String query) async {
+  // Search food items - modify to return the results
+  Future<List<FoodItem>> searchFoodItems(String query) async {
     try {
       if (query.isEmpty) {
         _isSearching = false;
         _searchQuery = '';
         _searchResults = [];
         notifyListeners();
-        return;
+        return [];
       }
 
       _isSearching = true;
       _searchQuery = query;
       notifyListeners();
 
-      final results = await searchFoodsUseCase?.execute(query);
+      final results = await searchFoodsUseCase?.execute(query) ?? [];
 
-      _searchResults = results ?? [];
+      _searchResults = results;
       notifyListeners();
+      return results; // Return the results here
     } catch (e) {
       _setError(e.toString());
+      return []; // Return empty list on error
     }
   }
 

@@ -134,8 +134,11 @@ class AuthProvider with ChangeNotifier {
         return true;
       }
 
+
+
       return false;
     } catch (e) {
+      print(e);
       _setError(e.toString());
       return false;
     } finally {

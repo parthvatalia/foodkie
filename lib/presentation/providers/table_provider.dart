@@ -84,6 +84,21 @@ class TableProvider with ChangeNotifier {
     return getTablesByStatusUseCase?.execute(status);
   }
 
+  Future<List<TableModel>> getAllTablesFuture() async {
+    try {
+      _setStatus(TableProviderStatus.loading);
+
+      final tables = await getTablesUseCase?.executeFuture() ?? [];
+
+      _tables = tables;
+      _setStatus(TableProviderStatus.loaded);
+      return tables;
+    } catch (e) {
+      _setError(e.toString());
+      return [];
+    }
+  }
+
   // Load all tables
   Future<void> loadTables() async {
     try {

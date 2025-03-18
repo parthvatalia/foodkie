@@ -31,6 +31,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
   bool _obscurePassword = true;
+  bool _isLoading = true;
   bool _obscureConfirmPassword = true;
   UserRole? _selectedRole;
 
@@ -54,7 +55,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
     if (_formKey.currentState!.validate()) {
       // Check if the role is selected
       if (_selectedRole == null) {
-        _navigateToRoleSelection();
+        // Show a toast message instead of navigating away
+        ToastUtils.showWarningToast('Please select a role');
         return;
       }
 
@@ -64,30 +66,46 @@ class _RegisterScreenState extends State<RegisterScreen> {
         return;
       }
 
-      final authProvider = Provider.of<AuthProvider>(context, listen: false);
+      setState(() {
+        _isLoading = true; // Add a loading state if you don't have one
+      });
 
-      final success = await authProvider.register(
-        email: _emailController.text.trim(),
-        password: _passwordController.text,
-        name: _nameController.text.trim(),
-        role: _selectedRole!,
-        phone: _phoneController.text.trim(),
-      );
+      try {
+        final authProvider = Provider.of<AuthProvider>(context, listen: false);
 
-      if (!mounted) return;
-
-      if (success) {
-        ToastUtils.showSuccessToast('Registration successful! Please verify your email.');
-
-        // Navigate to verification screen or login
-        Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (_) => const LoginScreen()),
+        final success = await authProvider.register(
+          email: _emailController.text.trim(),
+          password: _passwordController.text,
+          name: _nameController.text.trim(),
+          role: _selectedRole!,
+          phone: _phoneController.text.trim(),
         );
-      } else {
-        // Show error toast
-        ToastUtils.showErrorToast(
-          authProvider.errorMessage ?? 'Registration failed',
-        );
+
+        if (!mounted) return;
+
+        if (success) {
+          ToastUtils.showSuccessToast('Registration successful! Please verify your email.');
+
+          // Navigate to verification screen or login
+          Navigator.of(context).pushReplacement(
+            MaterialPageRoute(builder: (_) => const LoginScreen()),
+          );
+        } else {
+          final errorMsg = authProvider.errorMessage ?? 'Registration failed';
+          print("Registration failed: $errorMsg");
+          ToastUtils.showErrorToast(errorMsg);
+
+        }
+      } catch (e) {
+        if (mounted) {
+          ToastUtils.showErrorToast('Registration error: ${e.toString()}');
+        }
+      } finally {
+        if (mounted) {
+          setState(() {
+            _isLoading = false; // Reset loading state
+          });
+        }
       }
     }
   }
@@ -282,8 +300,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                               _getRoleText(),
                               style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                                 color: _selectedRole == null
-                                    ? Colors.grey
-                                    : Colors.black,
+                                    ? Colors.white
+                                    : Colors.white60,
                               ),
                             ),
                           ],
@@ -303,7 +321,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 // Register Button
                 CustomButton(
                   text: StringConstants.register,
-                  onPressed: _register,
+                  onPressed: (){
+                    _register();
+                  },
                   height: 50,
                 ),
 

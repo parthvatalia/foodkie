@@ -16,7 +16,7 @@ import 'package:foodkie/presentation/screens/auth/splash_screen.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
+  //  options: DefaultFirebaseOptions.currentPlatform,
   );
 
   // Set preferred orientations

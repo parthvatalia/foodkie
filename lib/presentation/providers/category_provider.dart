@@ -98,6 +98,21 @@ class CategoryProvider with ChangeNotifier {
     }
   }
 
+  Future<List<Category>> getAllCategoriesFuture() async {
+    try {
+      _setStatus(CategoryStatus.loading);
+
+      final categories = await getCategoriesUseCase?.executeFuture() ?? [];
+
+      _categories = categories;
+      _setStatus(CategoryStatus.loaded);
+      return categories;
+    } catch (e) {
+      _setError(e.toString());
+      return [];
+    }
+  }
+
   // Add a new category
   Future<bool> addCategory({
     required String name,
@@ -185,26 +200,29 @@ class CategoryProvider with ChangeNotifier {
   }
 
   // Search categories
-  Future<void> searchCategories(String query) async {
+  // Search categories - modify to return the results
+  Future<List<Category>> searchCategories(String query) async {
     try {
       if (query.isEmpty) {
         _isSearching = false;
         _searchQuery = '';
         _searchResults = [];
         notifyListeners();
-        return;
+        return [];
       }
 
       _isSearching = true;
       _searchQuery = query;
       notifyListeners();
 
-      final results = await searchCategoriesUseCase?.execute(query);
+      final results = await searchCategoriesUseCase?.execute(query) ?? [];
 
-      _searchResults = results ?? [];
+      _searchResults = results;
       notifyListeners();
+      return results; // Return the results here
     } catch (e) {
       _setError(e.toString());
+      return []; // Return empty list on error
     }
   }
 

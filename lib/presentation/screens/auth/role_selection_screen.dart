@@ -154,7 +154,7 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
                     title,
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.bold,
-                      color: isSelected ? AppTheme.primaryColor : null,
+                      color: isSelected ? AppTheme.primaryColor : Colors.black,
                     ),
                   ),
 

@@ -1,5 +1,6 @@
 // data/repositories/auth_repository_impl.dart
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:foodkie/core/constants/app_constants.dart';
 import 'package:foodkie/core/enums/app_enums.dart';
 import 'package:foodkie/data/datasources/local/local_storage.dart';
 import 'package:foodkie/data/datasources/remote/auth_remote_source.dart';

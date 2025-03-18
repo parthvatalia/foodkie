@@ -47,30 +47,28 @@ class DefaultFirebaseOptions {
   }
 
   static const FirebaseOptions web = FirebaseOptions(
-    apiKey: 'AIzaSyBFOODkXh-QZGIRYUKKl2N1VXXXXXXXXXXXXX',
-    appId: '1:123456789012:web:a1b2c3d4e5f6a7b8c9d0e1',
-    messagingSenderId: '123456789012',
-    projectId: 'foodkie-app',
-    authDomain: 'foodkie-app.firebaseapp.com',
-    storageBucket: 'foodkie-app.appspot.com',
-    measurementId: 'G-XXXXXXXXXXXXXX',
+    apiKey: 'AIzaSyAr0r2132tnR-13TyEsN9jrwwY6zIp1NLk',
+    appId: '1:600820095452:android:b1885e6559f750f51d9719',
+    messagingSenderId: '600820095452',
+    projectId: 'foodkie',
+    storageBucket: 'foodkie.firebasestorage.app',
   );
 
   static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'AIzaSyD_VnfmDunbLlrM5EQGYYYYYYYYYYYYYY',
-    appId: '1:123456789012:android:a1b2c3d4e5f6a7b8c9d0e1',
-    messagingSenderId: '123456789012',
-    projectId: 'foodkie-app',
-    storageBucket: 'foodkie-app.appspot.com',
+    apiKey: 'AIzaSyAr0r2132tnR-13TyEsN9jrwwY6zIp1NLk',
+    appId: '1:600820095452:android:b1885e6559f750f51d9719',
+    messagingSenderId: '600820095452',
+    projectId: 'foodkie',
+    storageBucket: 'foodkie.firebasestorage.app',
   );
 
   static const FirebaseOptions ios = FirebaseOptions(
-    apiKey: 'AIzaSyBslLFqBs1kjdfsdWHtZZZZZZZZZZZZZZ',
-    appId: '1:123456789012:ios:a1b2c3d4e5f6a7b8c9d0e1',
-    messagingSenderId: '123456789012',
-    projectId: 'foodkie-app',
-    storageBucket: 'foodkie-app.appspot.com',
-    iosClientId: '123456789012-abcdefghijklmnopqrstuvwxyz123456.apps.googleusercontent.com',
-    iosBundleId: 'com.example.foodkie',
+    apiKey: 'AIzaSyAr0r2132tnR-13TyEsN9jrwwY6zIp1NLk',
+    appId: '1:600820095452:android:b1885e6559f750f51d9719',
+    messagingSenderId: '600820095452',
+    projectId: 'foodkie',
+    storageBucket: 'foodkie.firebasestorage.app',
+    iosClientId: '', // Not provided in your JSON
+    iosBundleId: 'com.infinite.foodkie.foodkie',
   );
 }
