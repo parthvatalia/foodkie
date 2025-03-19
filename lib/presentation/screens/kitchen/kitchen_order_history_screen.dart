@@ -299,7 +299,7 @@ class _KitchenOrderHistoryScreenState extends State<KitchenOrderHistoryScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Date header
-            if (!_selectedDate!.isAtSameMomentAs(DateFormat('MMMM dd, yyyy').parse(date)) ?? true)
+            if (_selectedDate?.isAtSameMomentAs(DateFormat('MMMM dd, yyyy').parse(date)) ?? true)
               Padding(
                 padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
                 child: Text(

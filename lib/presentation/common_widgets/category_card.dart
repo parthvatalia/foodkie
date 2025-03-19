@@ -25,7 +25,7 @@ class CategoryCard extends StatelessWidget {
       child: GestureDetector(
         onTap: onTap,
         child: Container(
-          margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+          margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 0),
           decoration: BoxDecoration(
             color: isSelected
                 ? Theme.of(context).colorScheme.primary.withOpacity(0.1)
@@ -58,7 +58,7 @@ class CategoryCard extends StatelessWidget {
 
               // Category Name
               Padding(
-                padding: EdgeInsets.all(showImage ? 8 : 16),
+                padding: EdgeInsets.all(showImage ? 0 : 0),
                 child: Text(
                   category.name,
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
@@ -82,7 +82,7 @@ class CategoryCard extends StatelessWidget {
   Widget _buildCategoryImage() {
     if (category.imageUrl.isEmpty) {
       return Container(
-        height: 100,
+        height: 80,
         width: double.infinity,
         color: Colors.grey[300],
         child: const Icon(

@@ -116,7 +116,7 @@ class CustomTextField extends StatelessWidget {
               borderSide: BorderSide(color: Colors.grey.shade200),
             ),
             filled: true,
-            fillColor: enabled ? Colors.black : Colors.grey.shade100,
+            fillColor: enabled ? Colors.white : Colors.grey.shade100,
           ),
         ),
       ],

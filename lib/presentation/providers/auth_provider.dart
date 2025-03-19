@@ -11,6 +11,8 @@ import 'package:foodkie/domain/usecases/auth/logout_usecase.dart';
 import 'package:foodkie/domain/usecases/auth/register_usecase.dart';
 import 'package:foodkie/domain/usecases/auth/update_user_profile_usecase.dart';
 
+import '../../core/constants/route_constants.dart';
+
 enum AuthStatus {
   initial,
   authenticated,
@@ -147,12 +149,14 @@ class AuthProvider with ChangeNotifier {
   }
 
   // Logout
-  Future<void> logout() async {
+  Future<void> logout(BuildContext context) async {
     try {
       _setLoading(true);
       await logoutUseCase?.execute();
       _user = null;
       _status = AuthStatus.unauthenticated;
+      Navigator.of(context).pushReplacementNamed(RouteConstants.splash);
+
     } catch (e) {
       _setError(e.toString());
     } finally {

@@ -125,11 +125,13 @@ class FoodItemCard extends StatelessWidget {
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           // Price
-                          Text(
-                            NumberFormatter.formatCurrency(foodItem.price),
-                            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                              color: AppTheme.primaryColor,
-                              fontWeight: FontWeight.bold,
+                          Expanded(
+                            child: Text(
+                              NumberFormatter.formatCurrency(foodItem.price),
+                              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                color: AppTheme.primaryColor,
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
                           ),
 
@@ -166,7 +168,7 @@ class FoodItemCard extends StatelessWidget {
   Widget _buildFoodImage() {
     return CachedNetworkImage(
       imageUrl: foodItem.imageUrl,
-      height: 140,
+      height: 100,
       width: double.infinity,
       fit: BoxFit.cover,
       placeholder: (context, url) => Container(

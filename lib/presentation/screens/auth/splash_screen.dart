@@ -31,7 +31,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
     super.initState();
 
     _controller = AnimationController(
-      duration: const Duration(milliseconds: 2000),
+      duration: const Duration(milliseconds: 1500),
       vsync: this,
     );
 
@@ -109,7 +109,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTheme.primaryColor,
+      backgroundColor: AppTheme.lightBackground,
       body: Center(
         child: FadeTransition(
           opacity: _fadeAnimation,
@@ -121,38 +121,6 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                 AssetsConstants.logoIconPath,
                 width: 150,
                 height: 150,
-              ),
-
-              const SizedBox(height: 24),
-
-              // App Name
-              Text(
-                StringConstants.appName,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 32,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-
-              const SizedBox(height: 8),
-
-              // App Slogan
-              Text(
-                StringConstants.appSlogan,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 16,
-                ),
-              ),
-
-              const SizedBox(height: 50),
-
-              // Loading animation
-              Lottie.asset(
-                AssetsConstants.loadingAnimationPath,
-                width: 80,
-                height: 80,
               ),
             ],
           ),

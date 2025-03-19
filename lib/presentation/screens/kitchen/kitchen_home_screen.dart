@@ -16,6 +16,8 @@ import 'package:foodkie/presentation/screens/kitchen/kitchen_order_detail_screen
 import 'package:foodkie/presentation/screens/kitchen/kitchen_order_history_screen.dart';
 import 'package:foodkie/presentation/screens/kitchen/kitchen_profile_screen.dart';
 
+import '../../../core/constants/route_constants.dart';
+
 class KitchenHomeScreen extends StatefulWidget {
   const KitchenHomeScreen({Key? key}) : super(key: key);
 
@@ -105,8 +107,8 @@ class _KitchenHomeScreenState extends State<KitchenHomeScreen> with SingleTicker
           indicatorColor: AppTheme.primaryColor,
           tabs: const [
             Tab(text: 'Pending'),
+            Tab(text: 'Accepted'),
             Tab(text: 'Preparing'),
-            Tab(text: 'Ready'),
           ],
         ),
       ),
@@ -119,13 +121,13 @@ class _KitchenHomeScreenState extends State<KitchenHomeScreen> with SingleTicker
             case 0: // Home
               Navigator.pop(context);
               break;
-            case 1: // Profile
+            case 2: // Profile
               Navigator.push(
                 context,
                 MaterialPageRoute(builder: (context) => const KitchenProfileScreen()),
               );
               break;
-            case 2: // Order History
+            case 1: // Order History
               Navigator.push(
                 context,
                 MaterialPageRoute(builder: (context) => const KitchenOrderHistoryScreen()),
@@ -133,13 +135,15 @@ class _KitchenHomeScreenState extends State<KitchenHomeScreen> with SingleTicker
               break;
             case 3: // Logout
             // Handled by CustomDrawer
+
               break;
           }
         },
         items:  [
           DrawerItem(icon: Icons.home, title: 'Dashboard'),
-          DrawerItem(icon: Icons.person, title: 'My Profile'),
           DrawerItem(icon: Icons.history, title: 'Order History'),
+          DrawerItem(icon: Icons.person, title: 'My Profile'),
+
         ],
       )
           : null,
@@ -169,15 +173,16 @@ class _KitchenHomeScreenState extends State<KitchenHomeScreen> with SingleTicker
             onAccept: _onAcceptOrder,
           ),
 
+          // Accepted Orders
+          _buildOrderList(
+            _filterOrdersByStatus(orderProvider.orders, OrderStatus.accepted),
+            onStartPreparing: _onStartPreparing,
+          ),
+
           // Preparing Orders
           _buildOrderList(
             _filterOrdersByStatus(orderProvider.orders, OrderStatus.preparing),
             onMarkReady: _onMarkReady,
-          ),
-
-          // Ready Orders
-          _buildOrderList(
-            _filterOrdersByStatus(orderProvider.orders, OrderStatus.ready),
           ),
         ],
       ),

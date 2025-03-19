@@ -47,7 +47,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
     return Scaffold(
       appBar: CustomAppBar(
         title: StringConstants.reports,
-        showBackButton: false,
+        showBackButton: true,
         actions: [
           IconButton(
             icon: const Icon(Icons.file_download),

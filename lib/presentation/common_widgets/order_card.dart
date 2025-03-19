@@ -7,8 +7,12 @@ import 'package:foodkie/core/theme/app_theme.dart';
 import 'package:foodkie/core/utils/number_formatter.dart';
 import 'package:foodkie/data/models/order_model.dart';
 import 'package:foodkie/presentation/common_widgets/status_badge.dart';
+import 'package:provider/provider.dart';
 
-class OrderCard extends StatelessWidget {
+import '../../data/models/table_model.dart';
+import '../providers/table_provider.dart';
+
+class OrderCard extends StatefulWidget {
   final Order order;
   final VoidCallback? onTap;
   final bool showDetails;
@@ -33,11 +37,46 @@ class OrderCard extends StatelessWidget {
   }) : super(key: key);
 
   @override
+  State<OrderCard> createState() => _OrderCardState();
+}
+
+class _OrderCardState extends State<OrderCard> {
+  TableModel? _table;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadOrderDetails();
+  }
+
+  Future<void> _loadOrderDetails() async {
+    try {
+      final tableProvider = Provider.of<TableProvider>(context, listen: false);
+      // Get order details
+
+      // Get table info
+      final table = await tableProvider.getTableById(widget.order.tableId);
+      if (table != null) {
+        setState(() {
+          _table = table;
+        });
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error loading order details: ${e.toString()}'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    } finally {}
+  }
+
+  @override
   Widget build(BuildContext context) {
     return FadeAnimation(
       delay: 0.2,
       child: GestureDetector(
-        onTap: onTap,
+        onTap: widget.onTap,
         child: Container(
           margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           decoration: BoxDecoration(
@@ -58,10 +97,10 @@ class OrderCard extends StatelessWidget {
               _buildOrderHeader(context),
 
               // Order Details
-              if (showDetails) _buildOrderDetails(context),
+              if (widget.showDetails) _buildOrderDetails(context),
 
               // Order Actions
-              if (showActions) _buildOrderActions(context),
+              if (widget.showActions) _buildOrderActions(context),
             ],
           ),
         ),
@@ -81,15 +120,15 @@ class OrderCard extends StatelessWidget {
             children: [
               // Order ID
               Text(
-                'Order #${order.id.substring(0, 6).toUpperCase()}',
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
+                'Order #${widget.order.id.substring(0, 6).toUpperCase()}',
+                style: Theme.of(
+                  context,
+                ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
               ),
 
               // Order Time
               Text(
-                order.createdAt.formatRelative(),
+                widget.order.createdAt.formatRelative(),
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                   color: AppTheme.lightSubtextColor,
                 ),
@@ -113,7 +152,7 @@ class OrderCard extends StatelessWidget {
                   ),
                   const SizedBox(width: 4),
                   Text(
-                    'Table ${order.tableId}',
+                    'Table number: ${_table?.number.toString() ?? 0}',
                     style: Theme.of(context).textTheme.bodyMedium,
                   ),
                 ],
@@ -121,7 +160,7 @@ class OrderCard extends StatelessWidget {
 
               // Items Count
               Text(
-                '${order.items.length} ${order.items.length == 1 ? 'item' : 'items'}',
+                '${widget.order.items.length} ${widget.order.items.length == 1 ? 'item' : 'items'}',
                 style: Theme.of(context).textTheme.bodyMedium,
               ),
             ],
@@ -134,14 +173,11 @@ class OrderCard extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               // Status Badge
-              StatusBadge(
-                text: _getStatusText(),
-                color: _getStatusColor(),
-              ),
+              StatusBadge(text: _getStatusText(), color: _getStatusColor()),
 
               // Total Amount
               Text(
-                NumberFormatter.formatCurrency(order.totalAmount),
+                NumberFormatter.formatCurrency(widget.order.totalAmount),
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
                   color: AppTheme.primaryColor,
                   fontWeight: FontWeight.bold,
@@ -170,9 +206,9 @@ class OrderCard extends StatelessWidget {
               // Section Title
               Text(
                 'Order Items',
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
+                style: Theme.of(
+                  context,
+                ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
               ),
 
               const SizedBox(height: 8),
@@ -181,9 +217,9 @@ class OrderCard extends StatelessWidget {
               ListView.builder(
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
-                itemCount: order.items.length,
+                itemCount: widget.order.items.length,
                 itemBuilder: (context, index) {
-                  final item = order.items[index];
+                  final item = widget.order.items[index];
                   return Padding(
                     padding: const EdgeInsets.symmetric(vertical: 4),
                     child: Row(
@@ -237,7 +273,8 @@ class OrderCard extends StatelessWidget {
               ),
 
               // Notes
-              if (order.notes != null && order.notes!.isNotEmpty) ...[
+              if (widget.order.notes != null &&
+                  widget.order.notes!.isNotEmpty) ...[
                 const SizedBox(height: 16),
 
                 // Section Title
@@ -258,7 +295,7 @@ class OrderCard extends StatelessWidget {
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(
-                    order.notes!,
+                    widget.order.notes!,
                     style: Theme.of(context).textTheme.bodyMedium,
                   ),
                 ),
@@ -272,7 +309,7 @@ class OrderCard extends StatelessWidget {
 
   Widget _buildOrderActions(BuildContext context) {
     // Only show actions for active orders
-    if (order.isServed || order.isCancelled) {
+    if (widget.order.isServed || widget.order.isCancelled) {
       return const SizedBox.shrink();
     }
 
@@ -290,9 +327,9 @@ class OrderCard extends StatelessWidget {
               // Section Title
               Text(
                 'Actions',
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
+                style: Theme.of(
+                  context,
+                ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
               ),
 
               const SizedBox(height: 8),
@@ -302,53 +339,53 @@ class OrderCard extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
                   // Accept Button
-                  if (order.isPending && onAccept != null)
+                  if (widget.order.isPending && widget.onAccept != null)
                     _buildActionButton(
                       context,
                       'Accept',
                       Icons.check_circle_outline,
                       AppTheme.successColor,
-                          () => onAccept!(order.id),
+                      () => widget.onAccept!(widget.order.id),
                     ),
 
                   // Prepare Button
-                  if (order.isAccepted && onPrepare != null)
+                  if (widget.order.isAccepted && widget.onPrepare != null)
                     _buildActionButton(
                       context,
                       'Prepare',
                       Icons.restaurant,
                       AppTheme.warningColor,
-                          () => onPrepare!(order.id),
+                      () => widget.onPrepare!(widget.order.id),
                     ),
 
                   // Ready Button
-                  if (order.isPreparing && onReady != null)
+                  if (widget.order.isPreparing && widget.onReady != null)
                     _buildActionButton(
                       context,
                       'Ready',
                       Icons.done_all,
                       AppTheme.infoColor,
-                          () => onReady!(order.id),
+                      () => widget.onReady!(widget.order.id),
                     ),
 
                   // Serve Button
-                  if (order.isReady && onServe != null)
+                  if (widget.order.isReady && widget.onServe != null)
                     _buildActionButton(
                       context,
                       'Serve',
                       Icons.room_service,
                       AppTheme.primaryColor,
-                          () => onServe!(order.id),
+                      () => widget.onServe!(widget.order.id),
                     ),
 
                   // Cancel Button
-                  if (order.isActive && onCancel != null)
+                  if (widget.order.isActive && widget.onCancel != null)
                     _buildActionButton(
                       context,
                       'Cancel',
                       Icons.cancel_outlined,
                       AppTheme.errorColor,
-                          () => onCancel!(order.id),
+                      () => widget.onCancel!(widget.order.id),
                     ),
                 ],
               ),
@@ -360,12 +397,12 @@ class OrderCard extends StatelessWidget {
   }
 
   Widget _buildActionButton(
-      BuildContext context,
-      String label,
-      IconData icon,
-      Color color,
-      VoidCallback onPressed,
-      ) {
+    BuildContext context,
+    String label,
+    IconData icon,
+    Color color,
+    VoidCallback onPressed,
+  ) {
     return InkWell(
       onTap: onPressed,
       borderRadius: BorderRadius.circular(8),
@@ -373,18 +410,11 @@ class OrderCard extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
         child: Column(
           children: [
-            Icon(
-              icon,
-              color: color,
-              size: 28,
-            ),
+            Icon(icon, color: color, size: 28),
             const SizedBox(height: 4),
             Text(
               label,
-              style: TextStyle(
-                color: color,
-                fontWeight: FontWeight.bold,
-              ),
+              style: TextStyle(color: color, fontWeight: FontWeight.bold),
             ),
           ],
         ),
@@ -393,7 +423,7 @@ class OrderCard extends StatelessWidget {
   }
 
   String _getStatusText() {
-    switch (order.status) {
+    switch (widget.order.status) {
       case OrderStatus.pending:
         return 'Pending';
       case OrderStatus.accepted:
@@ -410,7 +440,7 @@ class OrderCard extends StatelessWidget {
   }
 
   Color _getStatusColor() {
-    switch (order.status) {
+    switch (widget.order.status) {
       case OrderStatus.pending:
         return Colors.blue;
       case OrderStatus.accepted:

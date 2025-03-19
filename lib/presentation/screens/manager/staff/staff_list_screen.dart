@@ -165,7 +165,7 @@ class _StaffListScreenState extends State<StaffListScreen> {
     return Scaffold(
       appBar: CustomAppBar(
         title: StringConstants.staff,
-        showBackButton: false,
+        showBackButton: true,
         actions: [
           IconButton(
             icon: const Icon(Icons.filter_list),

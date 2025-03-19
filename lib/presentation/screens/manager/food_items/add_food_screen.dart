@@ -206,7 +206,7 @@ class _AddFoodScreenState extends State<AddFoodScreen> {
                 FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d{0,2}')),
               ],
               validator: (value) => Validators.validatePrice(value),
-              prefixIcon: const Icon(Icons.attach_money),
+              prefixIcon: const Text("₹"),
             ),
             const SizedBox(height: 16),
 

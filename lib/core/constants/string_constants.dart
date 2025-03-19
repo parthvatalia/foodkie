@@ -5,7 +5,8 @@ class StringConstants {
   static const String appName = 'Foodkie';
   static const String appSlogan = 'Restaurant Management Made Easy';
   static const String companyName = 'Foodkie Inc.';
-  static const String appDescription = 'A comprehensive restaurant management system for managers, waiters, and kitchen staff.';
+  static const String appDescription =
+      'A comprehensive restaurant management system for managers, waiters, and kitchen staff.';
 
   // Auth Strings
   static const String login = 'Login';
@@ -29,7 +30,8 @@ class StringConstants {
   static const String logout = 'Logout';
   static const String logoutConfirmation = 'Are you sure you want to logout?';
   static const String verifyEmail = 'Verify Email';
-  static const String verificationEmailSent = 'Verification email has been sent';
+  static const String verificationEmailSent =
+      'Verification email has been sent';
   static const String checkEmail = 'Please check your email';
 
   // Role Titles
@@ -38,9 +40,12 @@ class StringConstants {
   static const String kitchenTitle = 'Kitchen';
 
   // Role Descriptions
-  static const String managerDescription = 'Manage food items, categories, staff, and analyze restaurant performance.';
-  static const String waiterDescription = 'Take and manage customer orders from tables.';
-  static const String kitchenDescription = 'View and process incoming orders for preparation.';
+  static const String managerDescription =
+      'Manage food items, categories, staff, and analyze restaurant performance.';
+  static const String waiterDescription =
+      'Take and manage customer orders from tables.';
+  static const String kitchenDescription =
+      'View and process incoming orders for preparation.';
 
   // Common Action Buttons
   static const String save = 'Save';
@@ -171,8 +176,10 @@ class StringConstants {
   static const String noNotifications = 'No notifications';
 
   // Confirmation Messages
-  static const String deleteConfirmation = 'Are you sure you want to delete this?';
-  static const String cancelOrderConfirmation = 'Are you sure you want to cancel this order?';
+  static const String deleteConfirmation =
+      'Are you sure you want to delete this?';
+  static const String cancelOrderConfirmation =
+      'Are you sure you want to cancel this order?';
   static const String discardChangesConfirmation = 'Discard changes?';
 
   // Success Messages

@@ -81,7 +81,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> with SingleTickerProv
     return Scaffold(
       appBar: CustomAppBar(
         title: StringConstants.analytics,
-        showBackButton: false,
+        showBackButton: true,
       ),
       drawer: CustomDrawer(
         user: user,

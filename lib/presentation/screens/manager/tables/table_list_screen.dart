@@ -113,7 +113,7 @@ class _TableListScreenState extends State<TableListScreen> {
     return Scaffold(
       appBar: CustomAppBar(
         title: StringConstants.tables,
-        showBackButton: false,
+        showBackButton: true,
         actions: [
           IconButton(
             icon: const Icon(Icons.sort),

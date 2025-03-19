@@ -85,7 +85,7 @@ class _CategoryListScreenState extends State<CategoryListScreen> {
     return Scaffold(
       appBar: CustomAppBar(
         title: StringConstants.categories,
-        showBackButton: false,
+        showBackButton: true,
         actions: [
           IconButton(
             icon: const Icon(Icons.sort),

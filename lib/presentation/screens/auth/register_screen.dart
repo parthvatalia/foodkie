@@ -293,15 +293,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           children: [
                             const Icon(
                               Icons.work_outline,
-                              color: Colors.grey,
+                              color: Colors.black,
                             ),
                             const SizedBox(width: 12),
                             Text(
                               _getRoleText(),
                               style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                                 color: _selectedRole == null
-                                    ? Colors.white
-                                    : Colors.white60,
+                                    ? Colors.black
+                                    : Colors.black54,
                               ),
                             ),
                           ],

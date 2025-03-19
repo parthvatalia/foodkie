@@ -9,6 +9,8 @@ import 'package:foodkie/data/models/user_model.dart';
 import 'package:foodkie/presentation/common_widgets/confirmation_dialog.dart';
 import 'package:foodkie/presentation/providers/auth_provider.dart';
 
+import '../../core/constants/route_constants.dart';
+
 class CustomDrawer extends StatelessWidget {
   final UserModel user;
   final int selectedIndex;
@@ -48,7 +50,7 @@ class CustomDrawer extends StatelessWidget {
                   isSelected: index == selectedIndex,
                   onTap: () {
                     // Close drawer
-                    Navigator.pop(context);
+                    //Navigator.pop(context);
 
                     // Handle item selection
                     onItemSelected(index);
@@ -72,36 +74,26 @@ class CustomDrawer extends StatelessWidget {
     return UserAccountsDrawerHeader(
       accountName: Text(
         user.name,
-        style: const TextStyle(
-          fontWeight: FontWeight.bold,
-          fontSize: 18,
-        ),
+        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
       ),
-      accountEmail: Text(
-        user.email,
-        style: const TextStyle(
-          fontSize: 14,
-        ),
-      ),
+      accountEmail: Text(user.email, style: const TextStyle(fontSize: 14)),
       currentAccountPicture: CircleAvatar(
         backgroundColor: Colors.white,
-        backgroundImage: user.profileImage != null
-            ? NetworkImage(user.profileImage!)
-            : null,
-        child: user.profileImage == null
-            ? Text(
-          user.name.substring(0, 1).toUpperCase(),
-          style: TextStyle(
-            fontSize: 32,
-            fontWeight: FontWeight.bold,
-            color: AppTheme.primaryColor,
-          ),
-        )
-            : null,
+        backgroundImage:
+            user.profileImage != null ? NetworkImage(user.profileImage!) : null,
+        child:
+            user.profileImage == null
+                ? Text(
+                  user.name.substring(0, 1).toUpperCase(),
+                  style: TextStyle(
+                    fontSize: 32,
+                    fontWeight: FontWeight.bold,
+                    color: AppTheme.primaryColor,
+                  ),
+                )
+                : null,
       ),
-      decoration: BoxDecoration(
-        color: AppTheme.primaryColor,
-      ),
+      decoration: BoxDecoration(color: AppTheme.primaryColor),
       otherAccountsPictures: [
         Tooltip(
           message: _getRoleTooltip(user.role),
@@ -146,21 +138,12 @@ class CustomDrawer extends StatelessWidget {
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
 
     return ListTile(
-      leading: const Icon(
-        Icons.logout,
-        color: Colors.red,
-      ),
+      leading: const Icon(Icons.logout, color: Colors.red),
       title: const Text(
         'Logout',
-        style: TextStyle(
-          color: Colors.red,
-          fontWeight: FontWeight.bold,
-        ),
+        style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold),
       ),
       onTap: () {
-        // Close drawer
-        Navigator.pop(context);
-
         // Show confirmation dialog
         ConfirmationDialog.show(
           context: context,
@@ -169,13 +152,14 @@ class CustomDrawer extends StatelessWidget {
           confirmLabel: 'Logout',
           cancelLabel: 'Cancel',
           isDestructive: true,
-          icon: const Icon(
-            Icons.logout,
-            color: Colors.red,
-          ),
-          onConfirm: () {
-            // Logout user
-            authProvider.logout();
+          icon: const Icon(Icons.logout, color: Colors.red),
+          onConfirm: () async{
+           await authProvider.logout(context);
+           Navigator.of(context).pushNamedAndRemoveUntil(
+             RouteConstants.splash,
+                 (route) => false, // This removes all existing routes
+           );
+
           },
         );
       },
@@ -209,8 +193,5 @@ class DrawerItem {
   final IconData icon;
   final String title;
 
-  DrawerItem({
-    required this.icon,
-    required this.title,
-  });
+  DrawerItem({required this.icon, required this.title});
 }

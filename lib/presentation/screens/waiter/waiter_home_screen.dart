@@ -106,7 +106,7 @@ class _WaiterHomeScreenState extends State<WaiterHomeScreen> {
       appBar: AppBar(
         title: const Text(
           'Waiter Dashboard',
-          style: TextStyle(fontWeight: FontWeight.bold),
+          style: TextStyle(fontWeight: FontWeight.bold,color: Colors.white),
         ),
         backgroundColor: AppTheme.primaryColor,
         foregroundColor: Colors.white,
@@ -357,7 +357,7 @@ class _WaiterHomeScreenState extends State<WaiterHomeScreen> {
           },
         )
             : Column(
-          children: _activeOrders.map((order) {
+          children:_activeOrders.isNotEmpty? _activeOrders.map((order) {
             return OrderCard(
               order: order,
               onTap: () {
@@ -370,7 +370,7 @@ class _WaiterHomeScreenState extends State<WaiterHomeScreen> {
               showDetails: false,
               showActions: false,
             );
-          }).toList(),
+          }).toList():[],
         ),
       ],
     );

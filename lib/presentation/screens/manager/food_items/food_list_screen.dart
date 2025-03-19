@@ -131,7 +131,7 @@ class _FoodListScreenState extends State<FoodListScreen> {
     return Scaffold(
       appBar: CustomAppBar(
         title: StringConstants.foodItems,
-        showBackButton: false,
+        showBackButton: true,
         actions: [
           IconButton(
             icon: const Icon(Icons.filter_list),

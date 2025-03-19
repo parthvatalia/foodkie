@@ -23,6 +23,7 @@ import 'package:foodkie/presentation/screens/manager/tables/table_list_screen.da
 import 'package:foodkie/core/utils/number_formatter.dart';
 
 import '../../../../core/enums/app_enums.dart';
+import '../../../../data/models/table_model.dart';
 
 class ManagerDashboardScreen extends StatefulWidget {
   const ManagerDashboardScreen({Key? key}) : super(key: key);
@@ -175,7 +176,8 @@ class _ManagerDashboardScreenState extends State<ManagerDashboardScreen> {
           MaterialPageRoute(builder: (_) => const CategoryListScreen()),
         ).then((_) => _loadDashboardData());
         break;
-      case 2: // Food Items
+      case 2: // Food Items.
+
         Navigator.push(
           context,
           MaterialPageRoute(builder: (_) => const FoodListScreen()),
@@ -330,7 +332,7 @@ class _ManagerDashboardScreenState extends State<ManagerDashboardScreen> {
         _buildStatCard(
           title: 'Today\'s Revenue',
           value: NumberFormatter.formatCurrency(_todayRevenue),
-          icon: Icons.attach_money,
+          icon: IconData(0xf05db, fontFamily: 'MaterialIcons'),
           color: Colors.green,
         ),
         _buildStatCard(
@@ -374,9 +376,10 @@ class _ManagerDashboardScreenState extends State<ManagerDashboardScreen> {
     required Color color,
   }) {
     return Card(
-      elevation: 2,
+      elevation: 6,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(8),
+        side: BorderSide(color: Colors.black54,width: 0.5)
       ),
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -390,12 +393,7 @@ class _ManagerDashboardScreenState extends State<ManagerDashboardScreen> {
                   color: color,
                   size: 24,
                 ),
-                const Spacer(),
-                Icon(
-                  Icons.arrow_forward_ios,
-                  color: Colors.grey[400],
-                  size: 16,
-                ),
+
               ],
             ),
             const Spacer(),
@@ -513,6 +511,7 @@ class _ManagerDashboardScreenState extends State<ManagerDashboardScreen> {
                 label,
                 style: TextStyle(
                   color: color,
+                  fontSize: 12,
                   fontWeight: FontWeight.bold,
                 ),
               ),
@@ -524,8 +523,6 @@ class _ManagerDashboardScreenState extends State<ManagerDashboardScreen> {
   }
 
   Widget _buildRecentActivity() {
-    // This would typically be populated with actual recent activities
-    // For now, we'll show a placeholder
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -536,86 +533,315 @@ class _ManagerDashboardScreenState extends State<ManagerDashboardScreen> {
           ),
         ),
         const SizedBox(height: 16),
-        Card(
-          elevation: 2,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: ListView.separated(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            itemCount: 5,
-            separatorBuilder: (context, index) => const Divider(),
-            itemBuilder: (context, index) {
-              // Placeholder activity items
-              final activities = [
-                {
-                  'title': 'New order received',
-                  'details': 'Table 5, 4 items',
-                  'time': '10 min ago',
-                  'icon': Icons.receipt_long,
-                  'color': Colors.orange,
-                },
-                {
-                  'title': 'Food item updated',
-                  'details': 'Spaghetti Carbonara price updated',
-                  'time': '25 min ago',
-                  'icon': Icons.edit,
-                  'color': Colors.blue,
-                },
-                {
-                  'title': 'Table status changed',
-                  'details': 'Table 3 marked as available',
-                  'time': '45 min ago',
-                  'icon': Icons.table_bar,
-                  'color': Colors.brown,
-                },
-                {
-                  'title': 'New category added',
-                  'details': 'Desserts category created',
-                  'time': '1 hr ago',
-                  'icon': Icons.category,
-                  'color': Colors.purple,
-                },
-                {
-                  'title': 'Order completed',
-                  'details': 'Table 7 order served',
-                  'time': '1.5 hrs ago',
-                  'icon': Icons.check_circle,
-                  'color': Colors.green,
-                },
-              ];
+        FutureBuilder<List<dynamic>>(
+          future: _fetchRecentActivity(),
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Center(
+                child: CircularProgressIndicator(),
+              );
+            }
 
-              final activity = activities[index];
-
-              return ListTile(
-                leading: CircleAvatar(
-                  backgroundColor: activity['color'] as Color,
-                  child: Icon(
-                    activity['icon'] as IconData,
-                    color: Colors.white,
-                    size: 20,
-                  ),
+            if (snapshot.hasError) {
+              return Card(
+                elevation: 2,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
                 ),
-                title: Text(
-                  activity['title'] as String,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                subtitle: Text(activity['details'] as String),
-                trailing: Text(
-                  activity['time'] as String,
-                  style: TextStyle(
-                    color: Colors.grey[600],
-                    fontSize: 12,
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.error_outline,
+                        size: 48,
+                        color: Colors.red.shade300,
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        'Error loading recent activity',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: Colors.grey[700],
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Pull down to refresh',
+                        style: TextStyle(
+                          color: Colors.grey[600],
+                          fontSize: 14,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               );
-            },
-          ),
+            }
+
+            final activities = snapshot.data ?? [];
+
+            if (activities.isEmpty) {
+              return Card(
+                elevation: 2,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.hourglass_empty,
+                        size: 48,
+                        color: Colors.grey[400],
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        'No recent activity',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: Colors.grey[700],
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Recent orders and changes will appear here',
+                        style: TextStyle(
+                          color: Colors.grey[600],
+                          fontSize: 14,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            }
+
+            // Display activities
+            return Card(
+              elevation: 2,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: ListView.separated(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: activities.length > 5 ? 5 : activities.length,
+                separatorBuilder: (context, index) => const Divider(),
+                itemBuilder: (context, index) {
+                  final activity = activities[index];
+                  return _buildActivityItem(activity);
+                },
+              ),
+            );
+          },
         ),
       ],
     );
+  }
+
+  ListTile _buildActivityItem(Map<String, dynamic> activity) {
+    return ListTile(
+      leading: CircleAvatar(
+        backgroundColor: activity['color'] as Color,
+        child: Icon(
+          activity['icon'] as IconData,
+          color: Colors.white,
+          size: 20,
+        ),
+      ),
+      title: Text(
+        activity['title'] as String,
+        style: const TextStyle(
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+      subtitle: Text(activity['details'] as String),
+      trailing: Text(
+        activity['time'] as String,
+        style: TextStyle(
+          color: Colors.grey[600],
+          fontSize: 12,
+        ),
+      ),
+    );
+  }
+
+  Future<List<dynamic>> _fetchRecentActivity() async {
+    List<dynamic> activities = [];
+
+    try {
+      // Fetch recent orders
+      final orderProvider = Provider.of<OrderProvider>(context, listen: false);
+      final orders = await orderProvider.getOrderHistory(limit: 10);
+
+      // Fetch updated food items (last 3 days)
+      final foodItemProvider = Provider.of<FoodItemProvider>(context, listen: false);
+      final foodItems = await foodItemProvider.getAllFoodItemsFuture();
+
+      // Filter for recently updated items (last 3 days)
+      final threeDaysAgo = DateTime.now().subtract(const Duration(days: 3));
+      final recentFoodItems = foodItems.where((item) =>
+          item.updatedAt.isAfter(threeDaysAgo)).toList();
+
+      // Fetch tables
+      final tableProvider = Provider.of<TableProvider>(context, listen: false);
+      final tables = await tableProvider.getAllTablesFuture();
+
+      // Fetch categories
+      final categoryProvider = Provider.of<CategoryProvider>(context, listen: false);
+      final categories = await categoryProvider.getAllCategoriesFuture();
+      final recentCategories = categories.where((item) =>
+          item.updatedAt.isAfter(threeDaysAgo)).toList();
+
+      // Convert orders to activities
+      for (final order in orders) {
+        final table = tables.firstWhere(
+              (t) => t.id == order.tableId,
+          orElse: () => TableModel(
+            id: 'unknown',
+            number: 0,
+            capacity: 0,
+            status: TableStatus.available,
+            createdAt: DateTime.now(),
+            updatedAt: DateTime.now(),
+          ),
+        );
+
+        String timeAgo = _getTimeAgo(order.updatedAt);
+
+        if (order.isServed) {
+          activities.add({
+            'title': 'Order completed',
+            'details': 'Table ${table.number} order served (${order.items.length} items)',
+            'time': timeAgo,
+            'icon': Icons.check_circle,
+            'color': Colors.green,
+            'timestamp': order.updatedAt,
+          });
+        } else if (order.isCancelled) {
+          activities.add({
+            'title': 'Order cancelled',
+            'details': 'Table ${table.number} order cancelled',
+            'time': timeAgo,
+            'icon': Icons.cancel,
+            'color': Colors.red,
+            'timestamp': order.updatedAt,
+          });
+        } else if (order.isReady) {
+          activities.add({
+            'title': 'Order ready',
+            'details': 'Table ${table.number} order is ready to serve',
+            'time': timeAgo,
+            'icon': Icons.room_service,
+            'color': Colors.orange,
+            'timestamp': order.updatedAt,
+          });
+        } else if (order.isPreparing) {
+          activities.add({
+            'title': 'Order in preparation',
+            'details': 'Table ${table.number} order is being prepared',
+            'time': timeAgo,
+            'icon': Icons.restaurant,
+            'color': Colors.amber,
+            'timestamp': order.updatedAt,
+          });
+        } else {
+          activities.add({
+            'title': 'New order received',
+            'details': 'Table ${table.number}, ${order.items.length} items',
+            'time': timeAgo,
+            'icon': Icons.receipt_long,
+            'color': Colors.blue,
+            'timestamp': order.createdAt,
+          });
+        }
+      }
+
+      // Add food item updates
+      for (final item in recentFoodItems) {
+        final timeAgo = _getTimeAgo(item.updatedAt);
+        activities.add({
+          'title': 'Food item updated',
+          'details': '${item.name} has been updated',
+          'time': timeAgo,
+          'icon': Icons.edit,
+          'color': Colors.blue,
+          'timestamp': item.updatedAt,
+        });
+      }
+
+      // Add category updates
+      for (final category in recentCategories) {
+        final timeAgo = _getTimeAgo(category.updatedAt);
+        activities.add({
+          'title': 'Category updated',
+          'details': '${category.name} category has been updated',
+          'time': timeAgo,
+          'icon': Icons.category,
+          'color': Colors.purple,
+          'timestamp': category.updatedAt,
+        });
+      }
+
+      // Add table status changes for tables that were updated recently
+      final recentTables = tables.where((table) => table.updatedAt.isAfter(threeDaysAgo)).toList();
+      for (final table in recentTables) {
+        final timeAgo = _getTimeAgo(table.updatedAt);
+        activities.add({
+          'title': 'Table status changed',
+          'details': 'Table ${table.number} marked as ${_getStatusText(table.status)}',
+          'time': timeAgo,
+          'icon': Icons.table_bar,
+          'color': Colors.brown,
+          'timestamp': table.updatedAt,
+        });
+      }
+
+      // Sort activities by timestamp, most recent first
+      activities.sort((a, b) {
+        final aTime = a['timestamp'] as DateTime;
+        final bTime = b['timestamp'] as DateTime;
+        return bTime.compareTo(aTime);
+      });
+
+    } catch (e) {
+      print('Error fetching recent activity: $e');
+      // Return empty list on error
+    }
+
+    return activities;
+  }
+
+  String _getTimeAgo(DateTime dateTime) {
+    final now = DateTime.now();
+    final difference = now.difference(dateTime);
+
+    if (difference.inSeconds < 60) {
+      return 'Just now';
+    } else if (difference.inMinutes < 60) {
+      return '${difference.inMinutes} min ago';
+    } else if (difference.inHours < 24) {
+      return '${difference.inHours} hr ago';
+    } else if (difference.inDays < 7) {
+      return '${difference.inDays} days ago';
+    } else {
+      return DateFormat('MMM dd').format(dateTime);
+    }
+  }
+
+  String _getStatusText(TableStatus status) {
+    switch (status) {
+      case TableStatus.available:
+        return 'available';
+      case TableStatus.occupied:
+        return 'occupied';
+      case TableStatus.reserved:
+        return 'reserved';
+    }
   }
 }

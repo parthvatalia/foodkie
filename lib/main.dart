@@ -499,7 +499,7 @@ class MyApp extends StatelessWidget {
             initialRoute: RouteConstants.splash,
             onGenerateRoute: AppRouter.onGenerateRoute,
             onUnknownRoute: AppRouter.onUnknownRoute,
-            darkTheme: AppTheme.darkTheme,
+            darkTheme: AppTheme.lightTheme,
             themeMode: ThemeMode.system,
             home: const SplashScreen(),
           );

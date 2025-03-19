@@ -1,4 +1,3 @@
-// presentation/screens/waiter/cart_screen.dart
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:foodkie/core/animations/fade_animation.dart';
@@ -7,6 +6,7 @@ import 'package:foodkie/core/theme/app_theme.dart';
 import 'package:foodkie/core/utils/number_formatter.dart';
 import 'package:foodkie/data/models/food_item_model.dart';
 import 'package:foodkie/data/models/order_item_model.dart';
+import 'package:foodkie/data/models/table_model.dart';
 import 'package:foodkie/presentation/common_widgets/app_bar_widget.dart';
 import 'package:foodkie/presentation/common_widgets/confirmation_dialog.dart';
 import 'package:foodkie/presentation/common_widgets/custom_button.dart';
@@ -33,7 +33,36 @@ class _CartScreenState extends State<CartScreen> {
   @override
   void initState() {
     super.initState();
-    _loadFoodItems();
+    Future.microtask(() {
+      _loadFoodItems();
+      _ensureTablesLoaded();
+    });
+  }
+
+  Future<void> _ensureTablesLoaded() async {
+    final tableProvider = Provider.of<TableProvider>(context, listen: false);
+    final orderProvider = Provider.of<OrderProvider>(context, listen: false);
+
+    // If tables aren't loaded or if the selected table isn't in the list
+    if (tableProvider.tables.isEmpty ||
+        (orderProvider.selectedTableId != null &&
+            !tableProvider.tables.any(
+                  (table) => table.id == orderProvider.selectedTableId,
+            ))) {
+      try {
+        // Load or reload the tables
+        await tableProvider.loadTables();
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Error loading tables: ${e.toString()}'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      }
+    }
   }
 
   @override
@@ -49,10 +78,14 @@ class _CartScreenState extends State<CartScreen> {
 
     try {
       final orderProvider = Provider.of<OrderProvider>(context, listen: false);
-      final foodItemProvider = Provider.of<FoodItemProvider>(context, listen: false);
+      final foodItemProvider = Provider.of<FoodItemProvider>(
+        context,
+        listen: false,
+      );
 
       // Get all food items in the cart
-      final foodItemIds = orderProvider.cart.map((item) => item.foodItemId).toSet();
+      final foodItemIds =
+      orderProvider.cart.map((item) => item.foodItemId).toSet();
 
       for (final id in foodItemIds) {
         final foodItem = await foodItemProvider.getFoodItemById(id);
@@ -113,6 +146,13 @@ class _CartScreenState extends State<CartScreen> {
     orderProvider.updateCartItemNotes(item.foodItemId, notes);
   }
 
+  void _selectTable(String? tableId) {
+    if (tableId == null) return;
+
+    final orderProvider = Provider.of<OrderProvider>(context, listen: false);
+    orderProvider.setSelectedTable(tableId);
+  }
+
   Future<void> _placeOrder() async {
     final orderProvider = Provider.of<OrderProvider>(context, listen: false);
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
@@ -121,16 +161,44 @@ class _CartScreenState extends State<CartScreen> {
     final selectedTableId = orderProvider.selectedTableId;
     final waiterId = authProvider.user?.id;
 
+    // Check for table selection
     if (selectedTableId == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('No table selected'),
+          content: Text('Please select a table before placing an order'),
           backgroundColor: Colors.red,
         ),
       );
       return;
     }
 
+    // Verify that table exists
+    final tableExists = tableProvider.tables.any(
+          (table) => table.id == selectedTableId,
+    );
+    if (!tableExists) {
+      // First try to reload tables to see if it resolves the issue
+      await tableProvider.loadTables();
+
+      // Check again after reload
+      final tableExistsAfterReload = tableProvider.tables.any(
+            (table) => table.id == selectedTableId,
+      );
+      if (!tableExistsAfterReload) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Selected table not found. Please select another table.',
+            ),
+            backgroundColor: Colors.red,
+            duration: Duration(seconds: 3),
+          ),
+        );
+        return;
+      }
+    }
+
+    // Check for user authentication
     if (waiterId == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -141,6 +209,7 @@ class _CartScreenState extends State<CartScreen> {
       return;
     }
 
+    // Check for cart items
     if (orderProvider.cart.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -220,6 +289,110 @@ class _CartScreenState extends State<CartScreen> {
     return total;
   }
 
+  // Build the table selection dropdown widget
+  Widget _buildTableSelectionDropdown() {
+    final tableProvider = Provider.of<TableProvider>(context);
+    final orderProvider = Provider.of<OrderProvider>(context);
+    final selectedTableId = orderProvider.selectedTableId;
+
+    // Filter tables that are available (not occupied)
+    final availableTables = tableProvider.tables
+        .where((table) => table.status == TableStatus.available)
+        .toList();
+
+    // If a table is already selected, include it in the dropdown even if occupied
+    if (selectedTableId != null) {
+      final selectedTable = tableProvider.tables
+          .where((table) => table.id == selectedTableId)
+          .toList();
+
+      if (selectedTable.isNotEmpty &&
+          !availableTables.any((table) => table.id == selectedTableId)) {
+        availableTables.add(selectedTable.first);
+      }
+    }
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      decoration: BoxDecoration(
+        color: AppTheme.primaryColor.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Select Table:',
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: 16,
+            ),
+          ),
+          const SizedBox(height: 8),
+          DropdownButtonFormField<String>(
+            decoration: InputDecoration(
+              filled: true,
+              fillColor: Colors.white,
+              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: BorderSide(color: Colors.grey.shade300),
+              ),
+              hintText: 'Select a table',
+            ),
+            value: selectedTableId,
+            items: availableTables.map((table) {
+              return DropdownMenuItem<String>(
+                value: table.id,
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.table_restaurant,
+                      color: table.status == TableStatus.available
+                          ? Colors.green
+                          : Colors.orange,
+                      size: 20,
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      'Table ${table.number} (${table.capacity} seats)',
+                      style: const TextStyle(fontSize: 14),
+                    ),
+                    if (table.status != TableStatus.available) ...[
+                      const SizedBox(width: 8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 6,
+                          vertical: 2,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.orange,
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: const Text(
+                          'Occupied',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              );
+            }).toList(),
+            onChanged: (String? value) {
+              _selectTable(value);
+            },
+            isExpanded: true,
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final orderProvider = Provider.of<OrderProvider>(context);
@@ -227,20 +400,18 @@ class _CartScreenState extends State<CartScreen> {
     final tableProvider = Provider.of<TableProvider>(context);
     final selectedTableId = orderProvider.selectedTableId;
 
-    // Try to get the selected table
-    final selectedTable = selectedTableId != null
+    // Safer way to get the selected table
+    final selectedTable =
+    selectedTableId != null
         ? tableProvider.tables.firstWhere(
           (table) => table.id == selectedTableId,
-      orElse: () => throw Exception('Selected table not found'),
     )
         : null;
 
     return Scaffold(
-      appBar: CustomAppBar(
-        title: 'Order Cart',
-        showBackButton: true,
-      ),
-      body: _isLoading
+      appBar: CustomAppBar(title: 'Order Cart', showBackButton: true),
+      body:
+      _isLoading
           ? const Center(child: CircularProgressIndicator())
           : cart.isEmpty
           ? EmptyStateWidget(
@@ -253,8 +424,14 @@ class _CartScreenState extends State<CartScreen> {
       )
           : Column(
         children: [
-          // Table info
-          if (selectedTable != null) ...[
+          // Table Selection Dropdown
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: _buildTableSelectionDropdown(),
+          ),
+
+          // Selected table info (only show if a table is selected)
+          if (selectedTable != null && selectedTable.id.isNotEmpty) ...[
             Container(
               color: AppTheme.primaryColor.withOpacity(0.1),
               padding: const EdgeInsets.all(16),
@@ -266,10 +443,35 @@ class _CartScreenState extends State<CartScreen> {
                   ),
                   const SizedBox(width: 8),
                   Text(
-                    'Table ${selectedTable.number} (${selectedTable.capacity} seats)',
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                    ),
+                    'Selected: Table ${selectedTable.number} (${selectedTable.capacity} seats)',
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                ],
+              ),
+            ),
+          ] else if (selectedTableId != null) ...[
+            // Display message when table ID exists but table not found
+            Container(
+              color: Colors.amber.withOpacity(0.2),
+              padding: const EdgeInsets.all(16),
+              child: Row(
+                children: [
+                  const Icon(
+                    Icons.warning_amber_rounded,
+                    color: Colors.amber,
+                  ),
+                  const SizedBox(width: 8),
+                  const Text(
+                    'Table information unavailable',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  const Spacer(),
+                  TextButton(
+                    onPressed: () {
+                      // Attempt to reload table data
+                      tableProvider.loadTables();
+                    },
+                    child: const Text('Reload'),
                   ),
                 ],
               ),
@@ -382,7 +584,8 @@ class _CartScreenState extends State<CartScreen> {
                 // Food image
                 ClipRRect(
                   borderRadius: BorderRadius.circular(8),
-                  child: foodItem.imageUrl.isNotEmpty
+                  child:
+                  foodItem.imageUrl.isNotEmpty
                       ? Image.network(
                     foodItem.imageUrl,
                     width: 60,
@@ -453,7 +656,10 @@ class _CartScreenState extends State<CartScreen> {
                 ),
                 Container(
                   margin: const EdgeInsets.symmetric(horizontal: 8),
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 4,
+                  ),
                   decoration: BoxDecoration(
                     border: Border.all(color: Colors.grey[300]!),
                     borderRadius: BorderRadius.circular(4),
@@ -478,10 +684,10 @@ class _CartScreenState extends State<CartScreen> {
                 const Spacer(),
                 // Item subtotal
                 Text(
-                  NumberFormatter.formatCurrency(foodItem.price * item.quantity),
-                  style: const TextStyle(
-                    fontWeight: FontWeight.bold,
+                  NumberFormatter.formatCurrency(
+                    foodItem.price * item.quantity,
                   ),
+                  style: const TextStyle(fontWeight: FontWeight.bold),
                 ),
               ],
             ),

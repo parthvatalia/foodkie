@@ -4,7 +4,7 @@ import 'package:intl/intl.dart';
 class NumberFormatter {
   static String formatCurrency(double amount) {
     final formatter = NumberFormat.currency(
-      symbol: '\$',
+      symbol: '\u{20B9}',
       decimalDigits: 2,
     );
     return formatter.format(amount);

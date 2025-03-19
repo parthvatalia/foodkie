@@ -9,6 +9,8 @@ import 'package:foodkie/presentation/common_widgets/custom_drawer.dart';
 import 'package:foodkie/presentation/common_widgets/confirmation_dialog.dart';
 import 'package:foodkie/presentation/providers/auth_provider.dart';
 
+import '../../../../core/constants/route_constants.dart' show RouteConstants;
+
 class ManagerSettingsScreen extends StatefulWidget {
   const ManagerSettingsScreen({Key? key}) : super(key: key);
 
@@ -46,7 +48,7 @@ class _ManagerSettingsScreenState extends State<ManagerSettingsScreen> {
     return Scaffold(
       appBar: CustomAppBar(
         title: StringConstants.settings,
-        showBackButton: false,
+        showBackButton: true,
       ),
       drawer: CustomDrawer(
         user: user,
@@ -74,23 +76,23 @@ class _ManagerSettingsScreenState extends State<ManagerSettingsScreen> {
       children: [
         _buildProfileCard(),
         const SizedBox(height: 16),
-        _buildSettingsSection(
-          title: 'Appearance',
-          children: [
-            _buildSwitchTile(
-              title: StringConstants.darkMode,
-              value: _darkMode,
-              onChanged: (value) {
-                setState(() {
-                  _darkMode = value;
-                });
-                // In a real app, apply theme change
-              },
-              icon: Icons.dark_mode,
-            ),
-            _buildLanguageTile(),
-          ],
-        ),
+        // _buildSettingsSection(
+        //   title: 'Appearance',
+        //   children: [
+        //     _buildSwitchTile(
+        //       title: StringConstants.darkMode,
+        //       value: _darkMode,
+        //       onChanged: (value) {
+        //         setState(() {
+        //           _darkMode = value;
+        //         });
+        //         // In a real app, apply theme change
+        //       },
+        //       icon: Icons.dark_mode,
+        //     ),
+        //     _buildLanguageTile(),
+        //   ],
+        // ),
         _buildSettingsSection(
           title: 'Notifications',
           children: [
@@ -126,49 +128,48 @@ class _ManagerSettingsScreenState extends State<ManagerSettingsScreen> {
             ),
           ],
         ),
-        _buildSettingsSection(
-          title: 'Security',
-          children: [
-            _buildNavigationTile(
-              title: 'Change Password',
-              icon: Icons.lock,
-              onTap: () {
-                // Navigate to change password screen
-              },
-            ),
-            _buildNavigationTile(
-              title: 'Privacy Settings',
-              icon: Icons.security,
-              onTap: () {
-                // Navigate to privacy settings
-              },
-            ),
-          ],
-        ),
+        // _buildSettingsSection(
+        //   title: 'Security',
+        //   children: [
+        //     _buildNavigationTile(
+        //       title: 'Change Password',
+        //       icon: Icons.lock,
+        //       onTap: () {
+        //       },
+        //     ),
+        //     _buildNavigationTile(
+        //       title: 'Privacy Settings',
+        //       icon: Icons.security,
+        //       onTap: () {
+        //         // Navigate to privacy settings
+        //       },
+        //     ),
+        //   ],
+        // ),
         _buildSettingsSection(
           title: 'About',
           children: [
-            _buildNavigationTile(
-              title: StringConstants.aboutApp,
-              icon: Icons.info_outline,
-              onTap: () {
-                // Navigate to about screen
-              },
-            ),
-            _buildNavigationTile(
-              title: StringConstants.termsConditions,
-              icon: Icons.description,
-              onTap: () {
-                // Navigate to terms screen
-              },
-            ),
-            _buildNavigationTile(
-              title: StringConstants.privacyPolicy,
-              icon: Icons.privacy_tip,
-              onTap: () {
-                // Navigate to privacy policy screen
-              },
-            ),
+            // _buildNavigationTile(
+            //   title: StringConstants.aboutApp,
+            //   icon: Icons.info_outline,
+            //   onTap: () {
+            //     // Navigate to about screen
+            //   },
+            // ),
+            // _buildNavigationTile(
+            //   title: StringConstants.termsConditions,
+            //   icon: Icons.description,
+            //   onTap: () {
+            //     // Navigate to terms screen
+            //   },
+            // ),
+            // _buildNavigationTile(
+            //   title: StringConstants.privacyPolicy,
+            //   icon: Icons.privacy_tip,
+            //   onTap: () {
+            //     // Navigate to privacy policy screen
+            //   },
+            // ),
             _buildVersionTile(),
           ],
         ),
@@ -256,13 +257,13 @@ class _ManagerSettingsScreenState extends State<ManagerSettingsScreen> {
                   ],
                 ),
               ),
-              IconButton(
-                icon: const Icon(Icons.edit, color: AppTheme.primaryColor),
-                onPressed: () {
-                  // Navigate to edit profile screen
-                },
-                tooltip: 'Edit Profile',
-              ),
+              // IconButton(
+              //   icon: const Icon(Icons.edit, color: AppTheme.primaryColor),
+              //   onPressed: () {
+              //     // Navigate to edit profile screen
+              //   },
+              //   tooltip: 'Edit Profile',
+              // ),
             ],
           ),
         ],
@@ -405,7 +406,11 @@ class _ManagerSettingsScreenState extends State<ManagerSettingsScreen> {
       onConfirm: () {
         // Perform logout
         final authProvider = Provider.of<AuthProvider>(context, listen: false);
-        authProvider.logout();
+        authProvider.logout(context);
+        Navigator.of(context).pushNamedAndRemoveUntil(
+          RouteConstants.splash,
+              (route) => false, // This removes all existing routes
+        );
       },
     );
   }
