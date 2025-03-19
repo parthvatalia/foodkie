@@ -1,3 +1,4 @@
+// presentation/screens/waiter/cart_screen.dart
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:foodkie/core/animations/fade_animation.dart';
@@ -10,6 +11,7 @@ import 'package:foodkie/data/models/table_model.dart';
 import 'package:foodkie/presentation/common_widgets/app_bar_widget.dart';
 import 'package:foodkie/presentation/common_widgets/confirmation_dialog.dart';
 import 'package:foodkie/presentation/common_widgets/custom_button.dart';
+import 'package:foodkie/presentation/common_widgets/custom_text_field.dart';
 import 'package:foodkie/presentation/common_widgets/empty_state_widget.dart';
 import 'package:foodkie/presentation/providers/auth_provider.dart';
 import 'package:foodkie/presentation/providers/food_item_provider.dart';
@@ -17,6 +19,7 @@ import 'package:foodkie/presentation/providers/order_provider.dart';
 import 'package:foodkie/presentation/providers/table_provider.dart';
 
 import '../../../core/enums/app_enums.dart';
+import '../../../data/models/order_model.dart';
 
 class CartScreen extends StatefulWidget {
   const CartScreen({Key? key}) : super(key: key);
@@ -27,8 +30,10 @@ class CartScreen extends StatefulWidget {
 
 class _CartScreenState extends State<CartScreen> {
   final _notesController = TextEditingController();
+  final _customerNameController = TextEditingController(); // Added controller for customer name
   bool _isLoading = false;
   Map<String, FoodItem> _foodItemsMap = {};
+  Order? _existingOrder; // To track if we're adding to an existing order
 
   @override
   void initState() {
@@ -36,6 +41,7 @@ class _CartScreenState extends State<CartScreen> {
     Future.microtask(() {
       _loadFoodItems();
       _ensureTablesLoaded();
+      _checkForExistingOrder(); // Check if there's an existing order for this table
     });
   }
 
@@ -65,9 +71,49 @@ class _CartScreenState extends State<CartScreen> {
     }
   }
 
+  // Check if there's an existing active order for the selected table
+  Future<void> _checkForExistingOrder() async {
+    final orderProvider = Provider.of<OrderProvider>(context, listen: false);
+    final selectedTableId = orderProvider.selectedTableId;
+
+    if (selectedTableId != null) {
+      try {
+        setState(() {
+          _isLoading = true;
+        });
+
+        final activeOrder = await orderProvider.getActiveOrderForTable(selectedTableId);
+
+        if (activeOrder != null) {
+          setState(() {
+            _existingOrder = activeOrder;
+            // Prefill customer name if available
+            if (activeOrder.customerName != null && activeOrder.customerName!.isNotEmpty) {
+              _customerNameController.text = activeOrder.customerName!;
+            }
+          });
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Error checking for existing orders: ${e.toString()}'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      } finally {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
+  }
+
   @override
   void dispose() {
     _notesController.dispose();
+    _customerNameController.dispose(); // Dispose the customer name controller
     super.dispose();
   }
 
@@ -114,10 +160,10 @@ class _CartScreenState extends State<CartScreen> {
     orderProvider.removeFromCart(item.foodItemId);
 
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
+      const SnackBar(
         content: Text('Item removed from cart'),
         backgroundColor: Colors.red,
-        duration: const Duration(seconds: 2),
+        duration: Duration(seconds: 2),
       ),
     );
   }
@@ -151,6 +197,9 @@ class _CartScreenState extends State<CartScreen> {
 
     final orderProvider = Provider.of<OrderProvider>(context, listen: false);
     orderProvider.setSelectedTable(tableId);
+
+    // Check for existing order when table changes
+    _checkForExistingOrder();
   }
 
   Future<void> _placeOrder() async {
@@ -160,6 +209,7 @@ class _CartScreenState extends State<CartScreen> {
 
     final selectedTableId = orderProvider.selectedTableId;
     final waiterId = authProvider.user?.id;
+    final customerName = _customerNameController.text.trim(); // Get customer name
 
     // Check for table selection
     if (selectedTableId == null) {
@@ -229,7 +279,8 @@ class _CartScreenState extends State<CartScreen> {
       final order = await orderProvider.createOrder(
         tableId: selectedTableId,
         waiterId: waiterId,
-        notes: _notesController.text.isNotEmpty ? _notesController.text : null,
+        customerName: customerName.isNotEmpty ? customerName : null, // Pass customer name
+        notes: _notesController.text.isNotEmpty ? _notesController.text : null, items: orderProvider.cart,
       );
 
       if (order != null) {
@@ -295,21 +346,14 @@ class _CartScreenState extends State<CartScreen> {
     final orderProvider = Provider.of<OrderProvider>(context);
     final selectedTableId = orderProvider.selectedTableId;
 
-    // Filter tables that are available (not occupied)
-    final availableTables = tableProvider.tables
-        .where((table) => table.status == TableStatus.available)
-        .toList();
+    // Get all tables
+    final allTables = tableProvider.tables;
 
     // If a table is already selected, include it in the dropdown even if occupied
     if (selectedTableId != null) {
-      final selectedTable = tableProvider.tables
+      final selectedTable = allTables
           .where((table) => table.id == selectedTableId)
           .toList();
-
-      if (selectedTable.isNotEmpty &&
-          !availableTables.any((table) => table.id == selectedTableId)) {
-        availableTables.add(selectedTable.first);
-      }
     }
 
     return Container(
@@ -341,16 +385,14 @@ class _CartScreenState extends State<CartScreen> {
               hintText: 'Select a table',
             ),
             value: selectedTableId,
-            items: availableTables.map((table) {
+            items: allTables.map((table) {
               return DropdownMenuItem<String>(
                 value: table.id,
                 child: Row(
                   children: [
                     Icon(
                       Icons.table_restaurant,
-                      color: table.status == TableStatus.available
-                          ? Colors.green
-                          : Colors.orange,
+                      color: _getTableStatusColor(table.status),
                       size: 20,
                     ),
                     const SizedBox(width: 8),
@@ -366,12 +408,12 @@ class _CartScreenState extends State<CartScreen> {
                           vertical: 2,
                         ),
                         decoration: BoxDecoration(
-                          color: Colors.orange,
+                          color: _getTableStatusColor(table.status),
                           borderRadius: BorderRadius.circular(4),
                         ),
-                        child: const Text(
-                          'Occupied',
-                          style: TextStyle(
+                        child: Text(
+                          _getTableStatusText(table.status),
+                          style: const TextStyle(
                             color: Colors.white,
                             fontSize: 10,
                             fontWeight: FontWeight.bold,
@@ -393,6 +435,28 @@ class _CartScreenState extends State<CartScreen> {
     );
   }
 
+  Color _getTableStatusColor(TableStatus status) {
+    switch (status) {
+      case TableStatus.available:
+        return Colors.green;
+      case TableStatus.occupied:
+        return Colors.orange;
+      case TableStatus.reserved:
+        return Colors.red;
+    }
+  }
+
+  String _getTableStatusText(TableStatus status) {
+    switch (status) {
+      case TableStatus.available:
+        return 'Available';
+      case TableStatus.occupied:
+        return 'Occupied';
+      case TableStatus.reserved:
+        return 'Reserved';
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final orderProvider = Provider.of<OrderProvider>(context);
@@ -405,11 +469,12 @@ class _CartScreenState extends State<CartScreen> {
     selectedTableId != null
         ? tableProvider.tables.firstWhere(
           (table) => table.id == selectedTableId,
+      orElse: () => throw Exception('Table not found'),
     )
         : null;
 
     return Scaffold(
-      appBar: CustomAppBar(title: 'Order Cart', showBackButton: true),
+      appBar: CustomAppBar(title: _existingOrder != null ? 'Add to Order' : 'New Order', showBackButton: true),
       body:
       _isLoading
           ? const Center(child: CircularProgressIndicator())
@@ -477,6 +542,17 @@ class _CartScreenState extends State<CartScreen> {
               ),
             ),
           ],
+
+          // Customer Name Field (New addition)
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            child: CustomTextField(
+              label: 'Customer Name (Optional)',
+              controller: _customerNameController,
+              hintText: 'Enter customer name',
+              prefixIcon: const Icon(Icons.person),
+            ),
+          ),
 
           // Cart items
           Expanded(
@@ -555,7 +631,7 @@ class _CartScreenState extends State<CartScreen> {
                 const SizedBox(height: 16),
                 // Place Order button
                 CustomButton(
-                  text: 'Place Order',
+                  text: _existingOrder != null ? 'Add to Existing Order' : 'Place New Order',
                   onPressed: _placeOrder,
                   isLoading: _isLoading,
                   width: double.infinity,

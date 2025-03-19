@@ -12,6 +12,7 @@ abstract class OrderRepository {
     String? notes,
   });
 
+
   Future<Order?> getOrderById(String orderId);
 
   Stream<List<Order>> getOrdersForKitchen();

@@ -296,9 +296,14 @@ class OrderProvider with ChangeNotifier {
   }
 
   // Create an order
+  // In the OrderProvider class
+
+// Add this method to create an order with customer name
   Future<Order?> createOrder({
     required String tableId,
     required String waiterId,
+    required List<OrderItem> items,
+    String? customerName, // Add customer name parameter
     String? notes,
   }) async {
     try {
@@ -312,6 +317,7 @@ class OrderProvider with ChangeNotifier {
         tableId: tableId,
         waiterId: waiterId,
         items: _cart,
+        customerName: customerName, // Pass customer name to use case
         notes: notes,
       );
 
@@ -327,6 +333,7 @@ class OrderProvider with ChangeNotifier {
       return null;
     }
   }
+
 
   // Update order status
   Future<bool> updateOrderStatus({

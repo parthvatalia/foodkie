@@ -12,13 +12,16 @@ class CreateOrderUseCase {
     required String tableId,
     required String waiterId,
     required List<OrderItem> items,
+
     String? notes,
+    String? customerName,
   }) async {
     return await _orderRepository.createOrder(
       tableId: tableId,
       waiterId: waiterId,
       items: items,
       notes: notes,
+      customerName: customerName,
     );
   }
 }
