@@ -7,6 +7,7 @@ class Order {
   final String id;
   final String tableId;
   final String waiterId;
+  final String? customerName; // New field for customer name
   final OrderStatus status;
   final String? notes;
   final double totalAmount;
@@ -18,6 +19,7 @@ class Order {
     required this.id,
     required this.tableId,
     required this.waiterId,
+    this.customerName, // Added customer name parameter
     required this.status,
     this.notes,
     required this.totalAmount,
@@ -31,6 +33,7 @@ class Order {
       id: json['id'] as String,
       tableId: json['table_id'] as String,
       waiterId: json['waiter_id'] as String,
+      customerName: json['customer_name'] as String?, // Parse customer name
       status: OrderStatusExtension.fromString(json['status'] as String),
       notes: json['notes'] as String?,
       totalAmount: (json['total_amount'] as num).toDouble(),
@@ -45,6 +48,7 @@ class Order {
       'id': id,
       'table_id': tableId,
       'waiter_id': waiterId,
+      'customer_name': customerName, // Include customer name in JSON
       'status': status.value,
       'notes': notes,
       'total_amount': totalAmount,
@@ -63,6 +67,7 @@ class Order {
     String? id,
     String? tableId,
     String? waiterId,
+    String? customerName, // Added to copyWith
     OrderStatus? status,
     String? notes,
     double? totalAmount,
@@ -74,6 +79,7 @@ class Order {
       id: id ?? this.id,
       tableId: tableId ?? this.tableId,
       waiterId: waiterId ?? this.waiterId,
+      customerName: customerName ?? this.customerName,
       status: status ?? this.status,
       notes: notes ?? this.notes,
       totalAmount: totalAmount ?? this.totalAmount,

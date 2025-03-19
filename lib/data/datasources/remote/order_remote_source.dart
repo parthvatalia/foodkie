@@ -12,11 +12,12 @@ class OrderRemoteSource {
   final String _orderCollection = AppConstants.ordersCollection;
   final String _orderItemCollection = AppConstants.orderItemsCollection;
 
-  // Create a new order
+
   Future<Order> createOrder({
     required String tableId,
     required String waiterId,
     required List<OrderItem> items,
+    String? customerName, // Added customer name parameter
     String? notes,
   }) async {
     try {
@@ -30,7 +31,90 @@ class OrderRemoteSource {
         throw Exception(ErrorConstants.tableNotFound);
       }
 
-      // Check table availability
+      // Check if there's an existing active order for this table
+      final existingOrderSnapshot = await _firestore
+          .collection(_orderCollection)
+          .where('table_id', isEqualTo: tableId)
+          .where('status', whereIn: [
+        OrderStatus.pending.value,
+        OrderStatus.accepted.value,
+        OrderStatus.preparing.value,
+        OrderStatus.ready.value,
+      ])
+          .limit(1)
+          .get();
+
+      // If there's an existing order, add to it instead of creating a new one
+      if (existingOrderSnapshot.docs.isNotEmpty) {
+        final existingOrderDoc = existingOrderSnapshot.docs.first;
+        final existingOrder = Order.fromJson(existingOrderDoc.data() as Map<String, dynamic>);
+
+        // Get existing order items
+        final existingItemsSnapshot = await _firestore
+            .collection(_orderItemCollection)
+            .where('order_id', isEqualTo: existingOrder.id)
+            .get();
+
+        final existingItems = existingItemsSnapshot.docs
+            .map((doc) => OrderItem.fromJson(doc.data() as Map<String, dynamic>))
+            .toList();
+
+        // Calculate new total amount with additional items
+        double newTotalAmount = existingOrder.totalAmount;
+        for (var item in items) {
+          final foodItemDoc = await _firestore
+              .collection(AppConstants.foodItemsCollection)
+              .doc(item.foodItemId)
+              .get();
+
+          final price = (foodItemDoc.data()!['price'] as num).toDouble();
+          newTotalAmount += price * item.quantity;
+        }
+
+        // Update order with new items in a transaction
+        final now = DateTime.now();
+
+        return await _firestore.runTransaction<Order>((transaction) async {
+          // Update existing order
+          transaction.update(
+            _firestore.collection(_orderCollection).doc(existingOrder.id),
+            {
+              'total_amount': newTotalAmount,
+              'notes': notes ?? existingOrder.notes,
+              'customer_name': customerName ?? existingOrder.customerName,
+              'updated_at': cf.Timestamp.fromDate(now),
+            },
+          );
+
+          // Add new order items
+          for (var item in items) {
+            final orderItem = item.copyWith(
+              id: FirebaseUtils.generateId(),
+              orderId: existingOrder.id,
+              createdAt: now,
+              updatedAt: now,
+            );
+
+            transaction.set(
+              _firestore.collection(_orderItemCollection).doc(orderItem.id),
+              orderItem.toJson(),
+            );
+          }
+
+          // Return updated order
+          final updatedOrder = existingOrder.copyWith(
+            totalAmount: newTotalAmount,
+            notes: notes ?? existingOrder.notes,
+            customerName: customerName ?? existingOrder.customerName,
+            updatedAt: now,
+            items: [...existingItems, ...items],
+          );
+
+          return updatedOrder;
+        });
+      }
+
+      // Check table availability if creating a new order
       final tableStatus = TableStatusExtension.fromString(tableDoc.data()!['status'] as String);
       if (tableStatus != TableStatus.available) {
         throw Exception(ErrorConstants.tableNotAvailable);
@@ -75,7 +159,7 @@ class OrderRemoteSource {
         totalAmount += price * item.quantity;
       }
 
-      // Create order with transaction
+      // Create new order with transaction
       final orderId = FirebaseUtils.generateId();
       final now = DateTime.now();
 
@@ -85,6 +169,7 @@ class OrderRemoteSource {
           id: orderId,
           tableId: tableId,
           waiterId: waiterId,
+          customerName: customerName, // Include customer name
           status: OrderStatus.pending,
           notes: notes,
           totalAmount: totalAmount,
@@ -129,6 +214,9 @@ class OrderRemoteSource {
       throw Exception(ErrorConstants.failedToCreate);
     }
   }
+
+  // Rest of the OrderRemoteSource methods remain the same
+  // ...
 
   // Get order by ID
   Future<Order?> getOrderById(String orderId) async {
@@ -175,6 +263,112 @@ class OrderRemoteSource {
         .snapshots()
         .asyncMap(_ordersWithItems);
   }
+
+  // Additional methods...
+
+  // Get all orders by table (active and completed)
+  Stream<List<Order>> getAllOrdersByTable(String tableId) {
+    return _firestore
+        .collection(_orderCollection)
+        .where('table_id', isEqualTo: tableId)
+        .orderBy('created_at', descending: true)
+        .snapshots()
+        .asyncMap(_ordersWithItems);
+  }
+
+  // Get table bill summary
+  Future<Map<String, dynamic>> getTableBillSummary(String tableId) async {
+    try {
+      final ordersSnapshot = await _firestore
+          .collection(_orderCollection)
+          .where('table_id', isEqualTo: tableId)
+          .where('status', whereIn: [
+        OrderStatus.pending.value,
+        OrderStatus.accepted.value,
+        OrderStatus.preparing.value,
+        OrderStatus.ready.value,
+        OrderStatus.served.value,
+      ])
+          .get();
+
+      if (ordersSnapshot.docs.isEmpty) {
+        return {
+          'tableId': tableId,
+          'customerName': null,
+          'totalAmount': 0.0,
+          'orders': [],
+        };
+      }
+
+      double totalAmount = 0;
+      String? customerName;
+      List<Map<String, dynamic>> orderSummaries = [];
+
+      for (var orderDoc in ordersSnapshot.docs) {
+        final orderData = orderDoc.data();
+        final orderId = orderDoc.id;
+        final amount = (orderData['total_amount'] as num).toDouble();
+
+        // Get customer name from the latest order
+        if (customerName == null || customerName.isEmpty) {
+          customerName = orderData['customer_name'] as String?;
+        }
+
+        totalAmount += amount;
+
+        // Get order details
+        final orderItemsSnapshot = await _firestore
+            .collection(_orderItemCollection)
+            .where('order_id', isEqualTo: orderId)
+            .get();
+
+        final itemCount = orderItemsSnapshot.docs.length;
+
+        orderSummaries.add({
+          'orderId': orderId,
+          'amount': amount,
+          'status': orderData['status'],
+          'itemCount': itemCount,
+          'createdAt': (orderData['created_at'] as cf.Timestamp).toDate(),
+        });
+      }
+
+      return {
+        'tableId': tableId,
+        'customerName': customerName,
+        'totalAmount': totalAmount,
+        'orders': orderSummaries,
+      };
+    } catch (e) {
+      throw Exception('Failed to get table bill summary: ${e.toString()}');
+    }
+  }
+
+  // Helper method to fetch orders with items
+  Future<List<Order>> _ordersWithItems(cf.QuerySnapshot snapshot) async {
+    return await Future.wait(
+      snapshot.docs.map((doc) async {
+        final orderId = doc.id;
+
+        // Get order items
+        final orderItemsSnapshot = await _firestore
+            .collection(_orderItemCollection)
+            .where('order_id', isEqualTo: orderId)
+            .get();
+
+        final items = orderItemsSnapshot.docs
+            .map((doc) => OrderItem.fromJson(doc.data() as Map<String, dynamic>))
+            .toList();
+
+        // Create order with items
+        return Order.fromJson(
+          doc.data() as Map<String, dynamic>,
+          items: items,
+        );
+      }),
+    );
+  }
+
 
   // Get ready orders for kitchen
   Stream<List<Order>> getReadyOrdersForKitchen() {
@@ -639,30 +833,6 @@ class OrderRemoteSource {
     }
   }
 
-  // Helper method to fetch orders with items
-  Future<List<Order>> _ordersWithItems(cf.QuerySnapshot snapshot) async {
-    return await Future.wait(
-      snapshot.docs.map((doc) async {
-        final orderId = doc.id;
-
-        // Get order items
-        final orderItemsSnapshot = await _firestore
-            .collection(_orderItemCollection)
-            .where('order_id', isEqualTo: orderId)
-            .get();
-
-        final items = orderItemsSnapshot.docs
-            .map((doc) => OrderItem.fromJson(doc.data() as Map<String, dynamic>))
-            .toList();
-
-        // Create order with items
-        return Order.fromJson(
-          doc.data() as Map<String, dynamic>,
-          items: items,
-        );
-      }),
-    );
-  }
 
   // Helper method to validate status transitions
   bool _isValidStatusTransition(OrderStatus from, OrderStatus to) {

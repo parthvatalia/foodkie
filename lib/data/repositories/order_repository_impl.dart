@@ -15,6 +15,7 @@ class OrderRepositoryImpl implements OrderRepository {
     required String tableId,
     required String waiterId,
     required List<OrderItem> items,
+    String? customerName,
     String? notes,
   }) async {
     try {
@@ -22,6 +23,7 @@ class OrderRepositoryImpl implements OrderRepository {
         tableId: tableId,
         waiterId: waiterId,
         items: items,
+        customerName: customerName,
         notes: notes,
       );
     } catch (e) {
@@ -64,9 +66,23 @@ class OrderRepositoryImpl implements OrderRepository {
   }
 
   @override
+  Stream<List<Order>> getAllOrdersByTable(String tableId) {
+    return _remoteSource.getAllOrdersByTable(tableId);
+  }
+
+  @override
   Future<Order?> getActiveOrderByTable(String tableId) async {
     try {
       return await _remoteSource.getActiveOrderByTable(tableId);
+    } catch (e) {
+      throw e.toString();
+    }
+  }
+
+  @override
+  Future<Map<String, dynamic>> getTableBillSummary(String tableId) async {
+    try {
+      return await _remoteSource.getTableBillSummary(tableId);
     } catch (e) {
       throw e.toString();
     }
@@ -206,4 +222,5 @@ class OrderRepositoryImpl implements OrderRepository {
       throw e.toString();
     }
   }
+
 }

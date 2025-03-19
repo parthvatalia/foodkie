@@ -8,6 +8,7 @@ abstract class OrderRepository {
     required String tableId,
     required String waiterId,
     required List<OrderItem> items,
+    String? customerName,
     String? notes,
   });
 
@@ -16,6 +17,10 @@ abstract class OrderRepository {
   Stream<List<Order>> getOrdersForKitchen();
 
   Stream<List<Order>> getReadyOrdersForKitchen();
+
+  Stream<List<Order>> getAllOrdersByTable(String tableId);
+
+  Future<Map<String, dynamic>> getTableBillSummary(String tableId);
 
   Stream<List<Order>> getOrdersByWaiter(String waiterId);
 
