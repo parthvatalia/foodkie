@@ -332,7 +332,7 @@ class _ManagerDashboardScreenState extends State<ManagerDashboardScreen> {
         _buildStatCard(
           title: 'Today\'s Revenue',
           value: NumberFormatter.formatCurrency(_todayRevenue),
-          icon: IconData(0xf05db, fontFamily: 'MaterialIcons'),
+          icon: Icons.monetization_on_rounded,
           color: Colors.green,
         ),
         _buildStatCard(
